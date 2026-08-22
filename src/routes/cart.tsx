@@ -5,6 +5,7 @@ import { siteContentQuery } from "@/lib/content-query";
 import { calcTotals, useCart } from "@/lib/cart";
 import { EMPTY_CONTENT, formatMoney } from "@/lib/content-types";
 import { Button } from "@/components/ui/button";
+import { QuantityInput } from "@/components/site/QuantityInput";
 
 export const Route = createFileRoute("/cart")({
   head: () => ({
@@ -58,14 +59,12 @@ function CartPage() {
                     {formatMoney(item.price, totals.currency)}
                   </p>
                 </div>
-                <input
-                  type="number"
-                  min={1}
-                  max={item.maxQty ?? 99}
+                <QuantityInput
                   value={item.qty}
-                  onChange={(e) => setQty(item.id, Number(e.target.value) || 1)}
-                  aria-label={`Quantity for ${item.title}`}
-                  className="h-10 w-20 rounded-md border border-input bg-background px-3 text-foreground"
+                  onChange={(qty) => setQty(item.id, qty)}
+                  min={item.minQty ?? 1}
+                  max={item.maxQty ?? 99}
+                  label={`Quantity for ${item.title}`}
                 />
                 <p className="w-24 text-right font-semibold text-foreground">
                   {formatMoney(item.price * item.qty, totals.currency)}
