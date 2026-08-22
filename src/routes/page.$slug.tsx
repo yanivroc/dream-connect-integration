@@ -63,7 +63,7 @@ function PageDetail() {
 
   const parent = findParent(content.pages, page);
   const canFloatMedia =
-    (page.images?.length ?? 0) === 1 && !page.videoUrl && !page.videoEmbed;
+    (page.images?.length ?? 0) >= 1 && !page.videoUrl && !page.videoEmbed;
   const children = sortPages(page.children ?? []);
   const currency =
     content.shippingRates.byAmount[0]?.currency ??
