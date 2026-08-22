@@ -102,7 +102,7 @@ function PageDetail() {
               {formatMoney(page.product.price ?? 0, currency)}
             </p>
           ) : null}
-          <RichText html={page.description} className={isProductPage(page) ? "mt-4" : undefined} />
+          <RichText html={page.description} className={isProductPage(page) ? "mt-4" : ""} />
           {isProductPage(page) ? <AddToCartPanel page={page} /> : null}
         </div>
       ) : (
