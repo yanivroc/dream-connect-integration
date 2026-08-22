@@ -41,9 +41,9 @@ export function PageMedia({ page, wide = false }: { page: WaPage; wide?: boolean
       ) : null}
 
       {current ? (
-        <div className="relative">
+        <div className="relative overflow-hidden rounded-xl border border-border bg-card/40 p-3">
           {current.hyperlink ? (
-            <a href={current.hyperlink} target="_blank" rel="noreferrer">
+            <a href={current.hyperlink} target="_blank" rel="noreferrer" className="block">
               {img}
             </a>
           ) : (
