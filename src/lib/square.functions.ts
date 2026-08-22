@@ -120,25 +120,9 @@ export const createSquarePayment = createServerFn({ method: "POST" })
       return { ok: false, error: detail };
     }
 
-    // Confirmation emails are best-effort; never fail a captured payment on them.
-    try {
-      const { sendMail } = await import("./mail.server");
-      const rows = priced.lines
-        .map(
-          (l) =>
-            `<tr><td>${l.title}</td><td align="center">${l.qty}</td><td align="right">${l.lineTotal.toFixed(2)}</td></tr>`,
-        )
-        .join("");
-      const html = `<h2>Thanks for your order, ${data.customer.name}!</h2>
-        <p>Payment reference: <strong>${body.payment.id}</strong></p>
-        <table cellpadding="6" style="border-collapse:collapse">${rows}
-        <tr><td colspan="2">Shipping</td><td align="right">${priced.shipping.toFixed(2)}</td></tr>
-        <tr><td colspan="2"><strong>Total</strong></td><td align="right"><strong>${priced.total.toFixed(2)} ${priced.currency}</strong></td></tr>
-        </table>`;
-      await sendMail({ to: data.customer.email, subject: "Your DreamozTech order", html });
-    } catch (err) {
-      console.error("order email failed", err);
-    }
+    // Confirmation emails are sent separately (see order-email.functions.ts) so
+    // a mail problem can never fail a captured payment.
+
 
     return {
       ok: true,
