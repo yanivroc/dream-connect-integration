@@ -98,8 +98,17 @@ function PageDetail() {
         </p>
       ) : null}
 
-      <RichText html={page.description} className="mt-6 max-w-3xl" />
-      <PageMedia page={page} />
+      {canFloatMedia ? (
+        <div className="mt-6 after:block after:clear-both after:content-['']">
+          <PageMedia page={page} float />
+          <RichText html={page.description} />
+        </div>
+      ) : (
+        <>
+          <RichText html={page.description} className="mt-6 max-w-3xl" />
+          <PageMedia page={page} />
+        </>
+      )}
 
       {isProductPage(page) ? <AddToCartPanel page={page} /> : null}
 
