@@ -7,6 +7,8 @@ import { siteContentQuery } from "@/lib/content-query";
 import { calcTotals, useCart } from "@/lib/cart";
 import { EMPTY_CONTENT, formatMoney } from "@/lib/content-types";
 import { createSquarePayment, getSquareConfig } from "@/lib/square.functions";
+import { sendOrderEmails } from "@/lib/order-email.functions";
+import { AddressAutocomplete } from "@/components/site/AddressAutocomplete";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
