@@ -24,7 +24,9 @@ Order emails (SMTP):
 - `SMTP_USER`
 - `SMTP_PASSWORD`
 
-Not used by any current code (add only if a map block is built later): `GoogleMapsKey`.
+Address autocomplete on the checkout page:
+
+- `GoogleMapsKey` — browser key for Google Places; the checkout address field will be upgraded to an autocomplete input (same as the reference project), served through a server function so the key is read from the environment and the address, city, postcode and country fields fill in automatically. Manual typing still works if the key is missing or Places is unavailable.
 
 ## Current state (verified)
 
