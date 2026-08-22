@@ -1,10 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { siteContentQuery } from "@/lib/content-query";
 import { slugify, sortPages } from "@/lib/content-types";
 
 export function SiteFooter() {
-  const { data } = useQuery(siteContentQuery);
+  const { data } = useSuspenseQuery(siteContentQuery);
   const content = data?.content;
   const pages = sortPages(content?.pages ?? []);
 
