@@ -51,6 +51,7 @@ export function priceOrder(
       price,
       qty,
       shippingPrice: page.product.shippingPrice ?? 0,
+      minQty: page.product.minQty ?? null,
       maxQty: page.product.maxQty ?? null,
     });
   }

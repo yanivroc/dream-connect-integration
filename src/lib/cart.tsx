@@ -54,18 +54,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems((prev) => {
       const existing = prev.find((i) => i.id === item.id);
       if (existing) {
-        const next = existing.qty + qty;
+        const next = Math.max(existing.qty + qty, item.minQty ?? 1);
         return prev.map((i) =>
           i.id === item.id ? { ...i, qty: item.maxQty ? Math.min(next, item.maxQty) : next } : i,
         );
       }
-      return [...prev, { ...item, qty }];
+      return [
+        ...prev,
+        { ...item, qty: Math.min(Math.max(qty, item.minQty ?? 1), item.maxQty ?? 99) },
+      ];
     });
   }, []);
 
   const setQty = useCallback((id: number, qty: number) => {
     setItems((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, qty: Math.max(1, qty) } : i)).filter((i) => i.qty > 0),
+      prev
+        .map((i) =>
+          i.id === id
+            ? { ...i, qty: Math.min(Math.max(qty, i.minQty ?? 1), i.maxQty ?? 99) }
+            : i,
+        )
+        .filter((i) => i.qty > 0),
     );
   }, []);
 
@@ -99,6 +108,7 @@ export function cartItemFromPage(page: WaPage): Omit<CartItem, "qty"> {
     price: page.product.price ?? 0,
     ...(image ? { image } : {}),
     shippingPrice: page.product.shippingPrice ?? 0,
+    minQty: page.product.minQty ?? null,
     maxQty: page.product.maxQty ?? null,
   };
 }
