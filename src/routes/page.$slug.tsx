@@ -62,6 +62,8 @@ function PageDetail() {
   }
 
   const parent = findParent(content.pages, page);
+  const canFloatMedia =
+    (page.images?.length ?? 0) === 1 && !page.videoUrl && !page.videoEmbed;
   const children = sortPages(page.children ?? []);
   const currency =
     content.shippingRates.byAmount[0]?.currency ??
@@ -98,8 +100,17 @@ function PageDetail() {
         </p>
       ) : null}
 
-      <RichText html={page.description} className="mt-6 max-w-3xl" />
-      <PageMedia page={page} />
+      {canFloatMedia ? (
+        <div className="mt-6 after:block after:clear-both after:content-['']">
+          <PageMedia page={page} float />
+          <RichText html={page.description} />
+        </div>
+      ) : (
+        <>
+          <RichText html={page.description} className="mt-6 max-w-3xl" />
+          <PageMedia page={page} />
+        </>
+      )}
 
       {isProductPage(page) ? <AddToCartPanel page={page} /> : null}
 

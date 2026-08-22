@@ -2,7 +2,15 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { sortImages, type WaPage } from "@/lib/content-types";
 
-export function PageMedia({ page, wide = false }: { page: WaPage; wide?: boolean }) {
+export function PageMedia({
+  page,
+  wide = false,
+  float = false,
+}: {
+  page: WaPage;
+  wide?: boolean;
+  float?: boolean;
+}) {
   const images = sortImages(page.images ?? []);
   const embedUrl = page.videoUrl || page.videoEmbed;
   const [index, setIndex] = useState(0);
@@ -25,7 +33,13 @@ export function PageMedia({ page, wide = false }: { page: WaPage; wide?: boolean
   ) : null;
 
   return (
-    <div className="mt-8 space-y-6">
+    <div
+      className={
+        float
+          ? "mt-8 w-full space-y-6 md:float-right md:mb-4 md:ml-8 md:mt-2 md:w-1/2 lg:w-[46%]"
+          : "mt-8 space-y-6"
+      }
+    >
       {embedUrl ? (
         <div className="aspect-video overflow-hidden rounded-xl border border-border">
           <iframe
