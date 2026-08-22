@@ -1,10 +1,26 @@
+import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { sortImages, type WaPage } from "@/lib/content-types";
 
 export function PageMedia({ page }: { page: WaPage }) {
   const images = sortImages(page.images ?? []);
   const embedUrl = page.videoUrl || page.videoEmbed;
+  const [index, setIndex] = useState(0);
 
   if (images.length === 0 && !embedUrl) return null;
+
+  const current = images[Math.min(index, images.length - 1)];
+  const go = (delta: number) =>
+    setIndex((i) => (i + delta + images.length) % Math.max(images.length, 1));
+
+  const img = current ? (
+    <img
+      src={current.url}
+      alt={current.alt || page.title}
+      loading="lazy"
+      className="h-80 w-full rounded-xl border border-border object-cover"
+    />
+  ) : null;
 
   return (
     <div className="mt-8 space-y-6">
@@ -20,25 +36,37 @@ export function PageMedia({ page }: { page: WaPage }) {
         </div>
       ) : null}
 
-      {images.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {images.map((img) => {
-            const el = (
-              <img
-                src={img.url}
-                alt={img.alt || page.title}
-                loading="lazy"
-                className="h-64 w-full rounded-xl border border-border object-cover"
-              />
-            );
-            return img.hyperlink ? (
-              <a key={img.id} href={img.hyperlink} target="_blank" rel="noreferrer">
-                {el}
-              </a>
-            ) : (
-              <div key={img.id}>{el}</div>
-            );
-          })}
+      {current ? (
+        <div className="relative">
+          {current.hyperlink ? (
+            <a href={current.hyperlink} target="_blank" rel="noreferrer">
+              {img}
+            </a>
+          ) : (
+            img
+          )}
+
+          {images.length > 1 ? (
+            <>
+              <button
+                onClick={() => go(-1)}
+                aria-label="Previous image"
+                className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full border border-border bg-background/80 p-2 text-foreground transition-colors hover:text-primary"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => go(1)}
+                aria-label="Next image"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full border border-border bg-background/80 p-2 text-foreground transition-colors hover:text-primary"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+              <span className="absolute bottom-3 right-3 rounded-full bg-background/80 px-3 py-1 text-xs text-muted-foreground">
+                {Math.min(index, images.length - 1) + 1} / {images.length}
+              </span>
+            </>
+          ) : null}
         </div>
       ) : null}
     </div>

@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { formatMoney, slugify, sortImages, type WaPage } from "@/lib/content-types";
 import { cartItemFromPage, useCart } from "@/lib/cart";
 import { Button } from "@/components/ui/button";
+import { QuantityInput } from "./QuantityInput";
 
 export function ProductCard({ page, currency }: { page: WaPage; currency: string }) {
   const { add, setOpen } = useCart();
@@ -11,12 +12,13 @@ export function ProductCard({ page, currency }: { page: WaPage; currency: string
   const max = page.product.maxQty ?? 99;
   const [qty, setQty] = useState(min);
   const image = sortImages(page.images ?? [])[0];
+  const slug = slugify(page.title);
 
   return (
     <article className="flex flex-col overflow-hidden rounded-xl border border-border bg-card">
       <Link
         to="/page/$slug"
-        params={{ slug: slugify(page.title) }}
+        params={{ slug }}
         className="block aspect-4/3 overflow-hidden bg-muted"
       >
         {image ? (
@@ -34,22 +36,22 @@ export function ProductCard({ page, currency }: { page: WaPage; currency: string
       </Link>
 
       <div className="flex flex-1 flex-col gap-3 p-5">
-        <h3 className="text-lg font-semibold text-foreground">{page.title}</h3>
+        <Link to="/page/$slug" params={{ slug }} className="group">
+          <h3 className="text-lg font-semibold text-foreground group-hover:text-primary">
+            {page.title}
+          </h3>
+        </Link>
         <p className="text-xl font-bold text-primary">
           {formatMoney(page.product.price ?? 0, currency)}
         </p>
 
         <div className="mt-auto flex items-center gap-3">
-          <input
-            type="number"
+          <QuantityInput
+            value={qty}
+            onChange={setQty}
             min={min}
             max={max}
-            value={qty}
-            onChange={(e) =>
-              setQty(Math.min(Math.max(Number(e.target.value) || min, min), max))
-            }
-            aria-label={`Quantity for ${page.title}`}
-            className="h-10 w-20 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+            label={`Quantity for ${page.title}`}
           />
           <Button
             className="flex-1"

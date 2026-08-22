@@ -55,9 +55,6 @@ export function SiteFooter() {
               {content.webApp.link}
             </a>
           ) : null}
-          <Link to="/cart" className="mt-2 block text-sm text-muted-foreground hover:text-primary">
-            Cart
-          </Link>
         </div>
       </div>
       <p className="border-t border-border py-5 text-center text-xs text-muted-foreground">
