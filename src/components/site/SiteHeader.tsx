@@ -17,48 +17,35 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/85 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-6">
-        <Link to="/" className="flex items-center gap-2">
+      <div className="mx-auto grid h-16 max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-6">
+        <Link to="/" className="flex min-w-0 items-center gap-2">
           {logo ? (
             <img src={logo} alt={content?.webApp?.title ?? "Logo"} className="h-8 w-auto" />
           ) : (
-            <span className="text-lg font-bold tracking-tight text-foreground">
+            <span className="truncate text-lg font-bold tracking-tight text-foreground">
               {content?.webApp?.title ?? "DreamozTech"}
             </span>
           )}
         </Link>
 
-        <nav className="hidden items-center gap-6 md:flex">
-          {pages.map((page) => (
-            <Link
-              key={page.id}
-              to="/page/$slug"
-              params={{ slug: slugify(page.title) }}
-              className="text-sm text-muted-foreground transition-colors hover:text-primary"
-              activeProps={{ className: "text-primary" }}
+        <div className="flex shrink-0 items-center gap-2">
+          {count > 0 ? (
+            <button
+              onClick={() => setOpen(true)}
+              aria-label="Open cart"
+              className="relative rounded-md p-2 text-foreground transition-colors hover:text-primary"
             >
-              {page.title}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setOpen(true)}
-            aria-label="Open cart"
-            className="relative rounded-md p-2 text-foreground transition-colors hover:text-primary"
-          >
-            <ShoppingCart className="h-5 w-5" />
-            {count > 0 ? (
+              <ShoppingCart className="h-5 w-5" />
               <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-xs font-bold text-primary-foreground">
                 {count}
               </span>
-            ) : null}
-          </button>
+            </button>
+          ) : null}
           <button
             onClick={() => setMenuOpen((o) => !o)}
             aria-label="Toggle menu"
-            className="rounded-md p-2 text-foreground md:hidden"
+            aria-expanded={menuOpen}
+            className="rounded-md p-2 text-foreground transition-colors hover:text-primary"
           >
             {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -66,18 +53,21 @@ export function SiteHeader() {
       </div>
 
       {menuOpen ? (
-        <nav className="flex flex-col gap-1 border-t border-border px-6 py-3 md:hidden">
-          {pages.map((page) => (
-            <Link
-              key={page.id}
-              to="/page/$slug"
-              params={{ slug: slugify(page.title) }}
-              onClick={() => setMenuOpen(false)}
-              className="py-2 text-sm text-muted-foreground hover:text-primary"
-            >
-              {page.title}
-            </Link>
-          ))}
+        <nav className="max-h-[70vh] overflow-y-auto border-t border-border bg-background/95">
+          <div className="mx-auto flex max-w-6xl flex-col gap-1 px-6 py-3">
+            {pages.map((page) => (
+              <Link
+                key={page.id}
+                to="/page/$slug"
+                params={{ slug: slugify(page.title) }}
+                onClick={() => setMenuOpen(false)}
+                className="rounded-md px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-card hover:text-primary"
+                activeProps={{ className: "text-primary" }}
+              >
+                {page.title}
+              </Link>
+            ))}
+          </div>
         </nav>
       ) : null}
     </header>
