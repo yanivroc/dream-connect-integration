@@ -10,6 +10,7 @@ export interface CartItem {
   qty: number;
   image?: string;
   shippingPrice: number;
+  minQty: number | null;
   maxQty: number | null;
 }
 
