@@ -61,6 +61,7 @@ function Index() {
 
       {rest.map((page, i) => {
         const children = sortPages(page.children ?? []);
+        const wideMedia = (page.images?.length ?? 0) > 1;
         return (
           <section
             key={page.id}
@@ -68,7 +69,13 @@ function Index() {
             id={slugify(page.title)}
           >
             <div className="mx-auto max-w-6xl px-6">
-              <div className="grid items-center gap-10 text-left lg:grid-cols-2">
+              <div
+                className={
+                  wideMedia
+                    ? "text-left"
+                    : "grid items-center gap-10 text-left lg:grid-cols-2"
+                }
+              >
                 <div className="min-w-0">
                   <h2 className="text-3xl font-bold text-foreground">{page.title}</h2>
                   <RichText html={page.description} className="mt-5" />
@@ -83,7 +90,7 @@ function Index() {
                   ) : null}
                 </div>
                 <div className="min-w-0">
-                  <PageMedia page={page} />
+                  <PageMedia page={page} wide={wideMedia} />
                 </div>
               </div>
               {children.length > 0 ? (

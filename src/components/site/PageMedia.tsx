@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { sortImages, type WaPage } from "@/lib/content-types";
 
-export function PageMedia({ page }: { page: WaPage }) {
+export function PageMedia({ page, wide = false }: { page: WaPage; wide?: boolean }) {
   const images = sortImages(page.images ?? []);
   const embedUrl = page.videoUrl || page.videoEmbed;
   const [index, setIndex] = useState(0);
@@ -18,7 +18,9 @@ export function PageMedia({ page }: { page: WaPage }) {
       src={current.url}
       alt={current.alt || page.title}
       loading="lazy"
-      className="h-80 w-full rounded-xl border border-border object-cover"
+      className={`mx-auto w-auto max-w-full rounded-lg object-contain ${
+        wide ? "max-h-[70vh]" : "max-h-[60vh]"
+      }`}
     />
   ) : null;
 
@@ -37,9 +39,9 @@ export function PageMedia({ page }: { page: WaPage }) {
       ) : null}
 
       {current ? (
-        <div className="relative">
+        <div className="relative overflow-hidden rounded-xl border border-border bg-card/40 p-3">
           {current.hyperlink ? (
-            <a href={current.hyperlink} target="_blank" rel="noreferrer">
+            <a href={current.hyperlink} target="_blank" rel="noreferrer" className="block">
               {img}
             </a>
           ) : (
