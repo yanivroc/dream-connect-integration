@@ -18,11 +18,9 @@ export function PageMedia({ page, wide = false }: { page: WaPage; wide?: boolean
       src={current.url}
       alt={current.alt || page.title}
       loading="lazy"
-      className={
-        wide
-          ? "mx-auto max-h-[70vh] w-auto max-w-full object-contain"
-          : "mx-auto max-h-[70vh] w-auto max-w-full object-contain"
-      }
+      className={`mx-auto w-auto max-w-full rounded-lg object-contain ${
+        wide ? "max-h-[70vh]" : "max-h-[60vh]"
+      }`}
     />
   ) : null;
 
