@@ -63,7 +63,7 @@ function PageDetail() {
 
   const parent = findParent(content.pages, page);
   const canFloatMedia =
-    (page.images?.length ?? 0) === 1 && !page.videoUrl && !page.videoEmbed;
+    (page.images?.length ?? 0) >= 1 && !page.videoUrl && !page.videoEmbed;
   const children = sortPages(page.children ?? []);
   const currency =
     content.shippingRates.byAmount[0]?.currency ??
@@ -94,25 +94,30 @@ function PageDetail() {
 
       <h1 className="text-3xl font-bold text-foreground sm:text-4xl">{page.title}</h1>
 
-      {isProductPage(page) ? (
-        <p className="mt-3 text-2xl font-bold text-primary">
-          {formatMoney(page.product.price ?? 0, currency)}
-        </p>
-      ) : null}
-
       {canFloatMedia ? (
         <div className="mt-6 after:block after:clear-both after:content-['']">
           <PageMedia page={page} float />
-          <RichText html={page.description} />
+          {isProductPage(page) ? (
+            <p className="text-2xl font-bold text-primary">
+              {formatMoney(page.product.price ?? 0, currency)}
+            </p>
+          ) : null}
+          <RichText html={page.description} className={isProductPage(page) ? "mt-4" : ""} />
+          {isProductPage(page) ? <AddToCartPanel page={page} /> : null}
         </div>
       ) : (
         <>
+          {isProductPage(page) ? (
+            <p className="mt-3 text-2xl font-bold text-primary">
+              {formatMoney(page.product.price ?? 0, currency)}
+            </p>
+          ) : null}
           <RichText html={page.description} className="mt-6 max-w-3xl" />
           <PageMedia page={page} />
+          {isProductPage(page) ? <AddToCartPanel page={page} /> : null}
         </>
       )}
 
-      {isProductPage(page) ? <AddToCartPanel page={page} /> : null}
 
       {page.hyperlink ? (
         <a
