@@ -1,97 +1,80 @@
-import net from "node:net";
-import tls from "node:tls";
+// Server-only mail sender.
+// The app runs in an edge runtime that cannot open SMTP connections, so sends
+// are relayed to the same deployment's Node serverless function
+// (api/send-mail.ts), which talks SMTP. No extra env vars: both sides derive
+// the same internal token from SMTP_PASSWORD.
+import { getRequestUrl } from "@tanstack/react-start/server";
 
-interface MailOptions {
-  to: string;
-  subject: string;
-  html: string;
+export interface MailAddress {
+  email: string;
+  name?: string;
 }
 
-function readLine(socket: net.Socket): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let buf = "";
-    const onData = (chunk: Buffer) => {
-      buf += chunk.toString("utf8");
-      // A complete SMTP reply ends with "NNN <text>\r\n" (no dash after code).
-      const lines = buf.split(/\r?\n/).filter(Boolean);
-      const last = lines[lines.length - 1];
-      if (last && /^\d{3} /.test(last)) {
-        cleanup();
-        resolve(buf);
-      }
-    };
-    const onErr = (e: Error) => {
-      cleanup();
-      reject(e);
-    };
-    const cleanup = () => {
-      socket.off("data", onData);
-      socket.off("error", onErr);
-    };
-    socket.on("data", onData);
-    socket.on("error", onErr);
-  });
+const RELAY_TOKEN_LABEL = "dreamoztech-mail-relay-v1";
+
+export function getMailConfig() {
+  return {
+    fromEmail: process.env["MAIL_FROM_EMAIL"]?.trim() ?? "",
+    fromName: process.env["MAIL_FROM_NAME"]?.trim() || "DreamozTech",
+  };
 }
 
-async function cmd(socket: net.Socket, line: string, expect = /^[23]\d\d/): Promise<string> {
-  socket.write(line + "\r\n");
-  const reply = await readLine(socket);
-  const code = reply.trim().split(/\r?\n/).pop() ?? "";
-  if (!expect.test(code)) throw new Error(`SMTP error for "${line.split(" ")[0]}": ${code}`);
-  return reply;
+async function relayToken(smtpPassword: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(smtpPassword),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(RELAY_TOKEN_LABEL));
+  return Array.from(new Uint8Array(sig))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
-/** Best-effort SMTP send. Throws on failure; callers should not block the order on it. */
-export async function sendMail({ to, subject, html }: MailOptions): Promise<void> {
-  const host = process.env["SMTP_HOST"];
-  const port = Number(process.env["SMTP_PORT"] ?? 465);
-  const secure = String(process.env["SMTP_SECURE"] ?? "true") === "true";
-  const user = process.env["SMTP_USER"];
-  const pass = process.env["SMTP_PASSWORD"];
-  const fromEmail = process.env["MAIL_FROM_EMAIL"];
-  const fromName = process.env["MAIL_FROM_NAME"] ?? "DreamozTech";
-
-  if (!host || !user || !pass || !fromEmail) {
-    throw new Error("SMTP is not configured");
-  }
-
-  const socket: net.Socket = secure
-    ? tls.connect({ host, port, servername: host })
-    : net.connect({ host, port });
-
-  await new Promise<void>((resolve, reject) => {
-    socket.once(secure ? "secureConnect" : "connect", () => resolve());
-    socket.once("error", reject);
-  });
-
+function relayUrl(): string | null {
   try {
-    await readLine(socket); // greeting
-    await cmd(socket, `EHLO ${host}`);
-    await cmd(socket, "AUTH LOGIN", /^3\d\d/);
-    await cmd(socket, Buffer.from(user).toString("base64"), /^3\d\d/);
-    await cmd(socket, Buffer.from(pass).toString("base64"));
-    await cmd(socket, `MAIL FROM:<${fromEmail}>`);
-    await cmd(socket, `RCPT TO:<${to}>`);
-    await cmd(socket, "DATA", /^3\d\d/);
+    const url = getRequestUrl();
+    if (url?.origin && !url.origin.includes("localhost")) return `${url.origin}/api/send-mail`;
+  } catch {
+    // no request context (e.g. build time)
+  }
+  const host =
+    process.env["VERCEL_PROJECT_PRODUCTION_URL"]?.trim() || process.env["VERCEL_URL"]?.trim();
+  return host ? `https://${host.replace(/^https?:\/\//, "")}/api/send-mail` : null;
+}
 
-    const message = [
-      `From: "${fromName}" <${fromEmail}>`,
-      `To: <${to}>`,
-      `Subject: ${subject}`,
-      "MIME-Version: 1.0",
-      'Content-Type: text/html; charset="utf-8"',
-      "",
-      html.replace(/^\./gm, ".."),
-      ".",
-    ].join("\r\n");
+/** Best-effort mail send via the Node relay. Throws on failure. */
+export async function sendMail(opts: {
+  to: MailAddress[];
+  subject: string;
+  htmlContent: string;
+  textContent?: string;
+  replyTo?: MailAddress;
+}): Promise<void> {
+  const smtpPassword = process.env["SMTP_PASSWORD"];
+  if (!smtpPassword) throw new Error("Email is not configured (SMTP_PASSWORD is missing).");
 
-    socket.write(message + "\r\n");
-    const reply = await readLine(socket);
-    if (!/^[23]\d\d/.test(reply.trim().split(/\r?\n/).pop() ?? "")) {
-      throw new Error(`SMTP rejected message: ${reply}`);
-    }
-    await cmd(socket, "QUIT", /^[23]\d\d/).catch(() => undefined);
-  } finally {
-    socket.end();
+  const url = relayUrl();
+  if (!url) throw new Error("Email sending is only available on the deployed site.");
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-mail-secret": await relayToken(smtpPassword),
+    },
+    body: JSON.stringify({
+      to: opts.to,
+      subject: opts.subject,
+      htmlContent: opts.htmlContent,
+      ...(opts.textContent ? { textContent: opts.textContent } : {}),
+      ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Email send failed: ${res.status} ${await res.text()}`);
   }
 }

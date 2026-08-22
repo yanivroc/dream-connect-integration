@@ -7,6 +7,8 @@ import { siteContentQuery } from "@/lib/content-query";
 import { calcTotals, useCart } from "@/lib/cart";
 import { EMPTY_CONTENT, formatMoney } from "@/lib/content-types";
 import { createSquarePayment, getSquareConfig } from "@/lib/square.functions";
+import { sendOrderEmails } from "@/lib/order-email.functions";
+import { AddressAutocomplete } from "@/components/site/AddressAutocomplete";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +45,7 @@ function CheckoutPage() {
     queryFn: () => getSquareConfig(),
   });
   const pay = useServerFn(createSquarePayment);
+  const sendEmails = useServerFn(sendOrderEmails);
 
   const totals = calcTotals(items, contentData?.content ?? EMPTY_CONTENT);
   const cardRef = useRef<SquareCard | null>(null);
@@ -132,6 +135,25 @@ function CheckoutPage() {
         toast.error(payment.error ?? "Payment failed.");
         return;
       }
+
+      // Emails are best-effort — a captured payment must never fail on them.
+      try {
+        const mailed = await sendEmails({
+          data: {
+            paymentId: payment.paymentId ?? "",
+            receiptUrl: payment.receiptUrl ?? null,
+            buyer: form,
+            items: items.map((i) => ({ id: i.id, title: i.title, qty: i.qty })),
+          },
+        });
+        if (!mailed.ok) {
+          toast.warning("Payment succeeded, but the confirmation email couldn't be sent.");
+        }
+      } catch (err) {
+        console.error("order email failed", err);
+        toast.warning("Payment succeeded, but the confirmation email couldn't be sent.");
+      }
+
       clear();
       void navigate({
         to: "/checkout/success",
@@ -176,13 +198,31 @@ function CheckoutPage() {
           ).map(([key, label]) => (
             <div key={key} className={key === "address" ? "sm:col-span-2" : ""}>
               <Label htmlFor={key}>{label}</Label>
-              <Input
-                id={key}
-                value={form[key]}
-                type={key === "email" ? "email" : "text"}
-                onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
-                className="mt-1.5"
-              />
+              {key === "address" ? (
+                <AddressAutocomplete
+                  id="address"
+                  value={form.address}
+                  className="mt-1.5"
+                  onChange={(v) => setForm((f) => ({ ...f, address: v }))}
+                  onSelect={(p) =>
+                    setForm((f) => ({
+                      ...f,
+                      address: p.address || f.address,
+                      city: p.city || f.city,
+                      postcode: p.postcode || f.postcode,
+                      country: p.country || f.country,
+                    }))
+                  }
+                />
+              ) : (
+                <Input
+                  id={key}
+                  value={form[key]}
+                  type={key === "email" ? "email" : "text"}
+                  onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+                  className="mt-1.5"
+                />
+              )}
             </div>
           ))}
         </div>
