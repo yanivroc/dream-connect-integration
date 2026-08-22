@@ -2,7 +2,15 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { sortImages, type WaPage } from "@/lib/content-types";
 
-export function PageMedia({ page, wide = false }: { page: WaPage; wide?: boolean }) {
+export function PageMedia({
+  page,
+  wide = false,
+  float = false,
+}: {
+  page: WaPage;
+  wide?: boolean;
+  float?: boolean;
+}) {
   const images = sortImages(page.images ?? []);
   const embedUrl = page.videoUrl || page.videoEmbed;
   const [index, setIndex] = useState(0);
