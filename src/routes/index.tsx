@@ -61,6 +61,7 @@ function Index() {
 
       {rest.map((page, i) => {
         const children = sortPages(page.children ?? []);
+        const wideMedia = (page.images?.length ?? 0) > 1;
         return (
           <section
             key={page.id}
