@@ -68,26 +68,27 @@ function Index() {
             id={slugify(page.title)}
           >
             <div className="mx-auto max-w-6xl px-6">
-              <div className="mx-auto max-w-3xl text-center">
-                <h2 className="text-3xl font-bold text-foreground">{page.title}</h2>
-                <RichText html={page.description} className="mt-5 [&_*]:text-center" />
-              </div>
-              <div className="mx-auto max-w-4xl">
-                <PageMedia page={page} />
+              <div className="grid items-center gap-10 text-left lg:grid-cols-2">
+                <div className="min-w-0">
+                  <h2 className="text-3xl font-bold text-foreground">{page.title}</h2>
+                  <RichText html={page.description} className="mt-5" />
+                  {children.length === 0 ? (
+                    <Link
+                      to="/page/$slug"
+                      params={{ slug: slugify(page.title) }}
+                      className="mt-6 inline-block text-sm font-semibold text-primary hover:underline"
+                    >
+                      Read more about {page.title}
+                    </Link>
+                  ) : null}
+                </div>
+                <div className="min-w-0">
+                  <PageMedia page={page} />
+                </div>
               </div>
               {children.length > 0 ? (
                 <PageCardGrid pages={children} currency={currency} />
-              ) : (
-                <div className="mt-8 text-center">
-                  <Link
-                    to="/page/$slug"
-                    params={{ slug: slugify(page.title) }}
-                    className="text-sm font-semibold text-primary hover:underline"
-                  >
-                    Read more about {page.title}
-                  </Link>
-                </div>
-              )}
+              ) : null}
             </div>
           </section>
         );
